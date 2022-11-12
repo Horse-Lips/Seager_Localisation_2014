@@ -1,0 +1,60 @@
+import networkx as nx
+import numpy as np
+import sys
+
+
+def lemma1(self):
+    """
+     - Organise the children such that the first vertex has highest degree and the
+     - last has second highest. Also enforce Lemma 1: Any vertex with more than two
+     - children that have higher degree than 3 means there is a hideout in the tree.
+     - Returns:
+        - 1 if no hideouts are detected in the tree
+        - -1 if a hideout is detected in the tree
+    """
+    print("Lemma 1 called. Checking for hideouts.") if self.verbose else None
+    labelMap = dict()
+
+    for node in self.tDict:
+        oldChildren = self.tDict[node].children
+
+        if len(oldChildren) < 3:
+            continue
+
+        childDegs = [len(self.tDict[child].children) for child in oldChildren]
+        deg3Count    = sum(deg >= 2 for deg in childDegs)
+
+        if deg3Count > 2:
+            print("Detected a hideout in the tree. Exiting.") if self.verbose else None
+            return -1
+        
+        maxDeg = childDegs.index(max(childDegs))    #Slow but gets max value
+        secDeg = 0
+
+        for i in range(len(childDegs)):
+            if childDegs[maxDeg] > childDegs[i] > childDegs[secDeg]:
+                secDeg = i
+
+        if sum(childDegs) != len(childDegs):    #Don't adjust children if all have degree 1
+            continue
+
+        if maxDeg != 0: #Dont adjust max if its already at index 0
+            labelMap[oldChildren[maxDeg]]        = oldChildren[0]
+            labelMap[oldChildren[0]]             = oldChildren[maxDeg]
+            oldChildren[0],  oldChildren[maxDeg] = oldChildren[maxDeg], oldChildren[0]
+            
+        if secDeg != len(childDegs) - 1 and secDeg != 0:
+            labelMap[oldChildren[secDeg]]        = oldChildren[-1]
+            labelMap[oldChildren[-1]]            = oldChildren[secDeg]
+            oldChildren[-1], oldChildren[secDeg] = oldChildren[secDeg], oldChildren[-1]
+
+    self.tree = nx.relabel_nodes(self.tree, labelMap, copy = True)  #Update altered node labels
+
+    self.tDict = dict()
+    self.lDict = dict()
+
+    self.createTreeDict(0)
+    self.createLevelsDict()
+
+    return 1
+
