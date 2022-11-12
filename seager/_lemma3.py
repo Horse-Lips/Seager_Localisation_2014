@@ -12,7 +12,7 @@ def lemma3(self, u, v, w, z):
         - w - The leftmost sibling in the children of v.
         - z - The rightmost sibling in the children of v.
     """
-    print("Lemma 3 called on Siblings(", w, ",", z, ") and", u) if self.verbose else None
+    self["trace"] += "Lemma 3 called on Siblings(" + str(w) + ", " + str(z) + ") and " + str(u) + "\n"
 
     if self.tDict[u].parent is not None:
         p, d = self.tDict[u].parent, 0

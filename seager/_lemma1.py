@@ -12,7 +12,7 @@ def lemma1(self):
         - 1 if no hideouts are detected in the tree
         - -1 if a hideout is detected in the tree
     """
-    print("Lemma 1 called. Checking for hideouts.") if self.verbose else None
+    self["trace"] += "Lemma 1 called. Checking for hideouts.\n"
     labelMap = dict()
 
     for node in self.tDict:
@@ -25,7 +25,7 @@ def lemma1(self):
         deg3Count    = sum(deg >= 2 for deg in childDegs)
 
         if deg3Count > 2:
-            print("Detected a hideout in the tree. Exiting.") if self.verbose else None
+            self["trace"] += "Detected a hideout in the tree. Exiting.\n"
             return -1
         
         maxDeg = childDegs.index(max(childDegs))    #Slow but gets max value

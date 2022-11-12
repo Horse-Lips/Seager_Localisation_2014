@@ -14,26 +14,28 @@ from ._case5  import case5
 
 
 class Seager:
-    def __init__(self, tree, t, verbose = False):
+    def __init__(self, tree):
         self.tree  = tree   #NetworkX tree object (Rooted at node 0)
         self.tDict = dict() #Dict representation of tree object (See createTreeDict)  
         self.lDict = dict() #Dict of level information of the tree object (See createLevelsDict)
+        self.iDict = dict() #Dict containing relevant information during execution
 
-        self.probeNum   = 0     #The number of the probe for list indexing
-        self.k          = 0     #Level marked as k in the tree
-        self.dkMinus, self.dk, self.dkPlus = [], [], [] #Target locations on levels k - 1, k, and k + 1
-
-        self.verbose = verbose   #Output useful information during execution
-
-        self.l  = 0 #Highest level path P can reach from probe p to target location t
-        self.vl, self.yl, self.zl = 0, 0, 0 #v, y, and z's ancestors on level l, used in case 5
-
-        self.probeList = [0]    #List of probed nodes
-        self.t         = t      #List of nodes target occupied
-        self.tLocation = -1     #Node target was located at
+        self["trace"] = ""  #Trace of execution for verbose output
 
         self.createTreeDict(0)  #Initialise the tree dict
         self.createLevelsDict() #Initialise the levels dict
+
+
+    def __setitem__(self, key, value):
+        self.iDict[key] = value
+
+
+    def __getitem__(self, key):
+        try:
+            return self.iDict[key]
+
+        except:
+            return None
 
 
     def solve(self):
@@ -44,10 +46,7 @@ class Seager:
         if lemma1(self) == -1:  #Organise tree and check for hideouts
             return None         #Exit if hideout detected
 
-        print(self.tDict[self.tDict[27].parent].children)
-
-        d = nx.shortest_path_length(self.tree, self.lDict[0][0], self.t[self.probeNum])   #Probe root
-        self.probeNum += 1
+        d = self.probe(0)
 
         if d == 0:
             return located(self, self.lDict[0][0])
@@ -71,20 +70,17 @@ class Seager:
             - z - The rightmost sibling of Siblings(w, z).
             - k - The level in the tree of Children(w, z) (NOT w and z).
         """
-        print("Lemma 4 called for Children(", w, ",", z, ") on level", k) if self.verbose else None
+        self["trace"] += "Lemma 4 called for Children(" + str(w) + ", " + str(z) + ") on level" + str(k) + "\n"
 
         if w == z and self.tDict[w].children == []:
             return located(self, w)
 
-        self.dkMinus = []
-        self.dk      = children(self, w, z)
-        self.dkPlus  = []
-        self.k = k                          #Set global value of level k
-        self.expandDSets()
+        self["k"] = k                           #Set global value of level k
+        self.setDSets(w, z)
 
         w, z   = reduceSet(self, w, z)      #Replace w with w', z with z' if no children
         vk     = self.tDict[w].children[0]  #Let vk be the first child of w
-        print("Assigned vk to node:", vk) if self.verbose else None
+        self["trace"] += "Assigned vk to node: " + str(vk) + "\n"
 
         if len(children(self, w, z)) == 1:
             return located(self, children(self, w, z)[0])
@@ -96,7 +92,7 @@ class Seager:
         ds = self.updateDSets(p, d1)
 
         if ds != -1:
-            print("located by dist set update")
+            self["trace"] += "located by dist set update\n"
             return
 
         elif d1 == 0:
@@ -107,11 +103,10 @@ class Seager:
 
         elif d1 == 2:
             if d:   #If probed vk and d1 == 2 then lemma 2 w's other children
-                lemma2(self, w, self.dk[0], self.dk[-1])
+                lemma2(self, w, self["dk"][0], self["dk"][-1])
                 return
 
             elif w == z and len(self.tDict[vk].children) == 1:
-                print("Located here!!!")
                 return located(self, w)
 
             else:
@@ -128,7 +123,7 @@ class Seager:
 
         elif d1 == 4:
             if d:   #If probed vk and d1 == 4 then target in subset of Children(w, z)
-                self.lemma4(self.tDict[self.dk[0]].parent, self.tDict[self.dk[-1]].parent, k)
+                self.lemma4(self.tDict[self["dk"][0]].parent, self.tDict[self["dk"][-1]].parent, k)
                 return
 
             case4(self, p, w, d1, k)
@@ -136,12 +131,12 @@ class Seager:
 
         elif d1 % 2 == 1 and d1 > 3:
             if d:   #If vk probed then dk+1 and dk-1 possible
-                if self.dkMinus == []:
-                    self.lemma4(self.tDict[self.dkPlus[0]].parent, self.tDict[self.dkPlus[-1]].parent, self.k + 1)
+                if self["dkMinus"] == []:
+                    self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, self["k"] + 1)
                     return
 
-                elif self.dkPlus == []:
-                    self.lemma4(self.tDict[self.dkMinus[0]].parent, self.tDict[self.dkMinus[-1]].parent, self.k - 1)
+                elif self["dkPlus"] == []:
+                    self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dkMinus"][-1]].parent, self["k"] - 1)
                     return
 
             case3(self, p, w, d1, k)
@@ -149,19 +144,19 @@ class Seager:
 
         elif d1 % 2 == 0 and d1 > 5:
             if d:
-                self.lemma4(self.tDict[self.dk[0]].parent, self.tDict[self.dk[-1]].parent, k)
+                self.lemma4(self.tDict[self["dk"][0]].parent, self.tDict[self["dk"][-1]].parent, k)
                 return
 
-            if self.dkMinus == []:
-                self.lemma4(self.tDict[self.dkPlus[0]].parent, self.tDict[self.dkPlus[-1]].parent, k + 1)
+            if self["dkMinus"] == []:
+                self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, k + 1)
                 return
 
-            elif self.dkPlus == []:
-                self.lemma4(self.tDict[self.dkMinus[0]].parent, self.tDict[self.dkMinus[-1]].parent, k - 1)
+            elif self["dkPlus"] == []:
+                self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dkMinus"][-1]].parent, k - 1)
                 return
 
             else:
-                case5(self, p, w, d1, self.dkMinus[-1])
+                case5(self, p, w, d1, self["dkMinus"][-1])
                 return
 
 
@@ -169,16 +164,24 @@ class Seager:
         """
          - Returns the distance from v to the target
         """
-        self.probeList.append(v)
+        if self["probeNum"] is None:
+            self["probeNum"]  = 0
+            self["probeList"] = []
 
-        if self.probeNum == len(self.t):    #Move target randomly if the target move set is empty
-            self.t.append(choice([i for i in self.tree.neighbors(self.t[-1])]))
+        if self["t"] is None:
+            self["t"] = [choice(range(len(self.tree)))]
 
-        self.probeNum += 1
+        self["probeList"].append(v)
 
-        d  = nx.shortest_path_length(self.tree, v, self.t[self.probeNum - 1])
+        if self["probeNum"] == len(self["t"]):    #Move target randomly if the target move set is empty
+            self["t"].append(choice([i for i in self.tree.neighbors(self["t"][-1])]))
 
-        print("Probing node:", v, "for target at node", self.t[self.probeNum - 1], "and d =", d) if self.verbose else None
+        self["probeNum"] += 1
+
+        d  = nx.shortest_path_length(self.tree, v, self["t"][self["probeNum"] - 1])
+
+        self["trace"] += "Probing node: " + str(v) + " for target at node " + str(self["t"][self["probeNum"] - 1])
+        self["trace"] += " and d = " + str(d) + "\n"
         
         return d
 
@@ -190,51 +193,47 @@ class Seager:
         distances = nx.single_source_dijkstra_path_length(self.tree, v)
         dkMinus, dk, dkPlus = [], [], []
 
-        tSet = self.dkMinus + self.dk + self.dkPlus
-
-        print(self.dkMinus, self.dk, self.dkPlus)
-        print(tSet)
+        tSet = self["dkMinus"] + self["dk"] + self["dkPlus"]
 
         for i in distances:
             if distances[i] == d and i in tSet:
-                print(i, ",", self.tDict[i].level)
-                print("k =", self.k)
-
-                if self.tDict[i].level == self.k - 1:
+                if self.tDict[i].level == self["k"] - 1:
                     dkMinus.append(i)
 
-                elif self.tDict[i].level == self.k:
+                elif self.tDict[i].level == self["k"]:
                     dk.append(i)
 
 
-                elif self.tDict[i].level == self.k + 1:
+                elif self.tDict[i].level == self["k"] + 1:
                     dkPlus.append(i)
-
-        print(dkMinus, dk, dkPlus)
 
         tSetNew = dkMinus + dk + dkPlus
 
         if len(tSetNew) == 1:
             return located(self, tSetNew[0])
 
-        self.dkMinus = dkMinus
-        self.dk      = dk
-        self.dkPlus  = dkPlus
+        self["dkMinus"] = dkMinus
+        self["dk"]      = dk
+        self["dkPlus"]  = dkPlus
 
         return -1
 
 
-    def expandDSets(self):
+    def setDSets(self, w, z):
         """
          - Expands Dk-1, Dk, and Dk+1 simulating target movement
         """
-        for n in self.dk:
-            if self.tDict[n].parent not in self.dkMinus:
-                self.dkMinus.append(self.tDict[n].parent)
+        self["dkMinus"] = []
+        self["dk"]      = children(self, w, z)  #Set dk sets
+        self["dkPlus"]  = []
+
+        for n in self["dk"]:
+            if self.tDict[n].parent not in self["dkMinus"]:
+                self["dkMinus"].append(self.tDict[n].parent)
 
             for c in self.tDict[n].children:
-                if c not in self.dkPlus:
-                    self.dkPlus.append(c)
+                if c not in self["dkPlus"]:
+                    self["dkPlus"].append(c)
 
 
     def createTreeDict(self, node, parent = None, level = 0):

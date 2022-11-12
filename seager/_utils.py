@@ -7,8 +7,8 @@ def located(self, v):
      - Args:
         - v - The vertex that the target was located at.
     """
-    print("Target located at node: ", v) if self.verbose else None
-    self.tLocation = v
+    self["trace"] += "Target located at node: " + str(v) + "\n"
+    self["tLocation"] = v
 
 
 def siblings(self, w, z):

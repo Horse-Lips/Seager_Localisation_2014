@@ -7,18 +7,18 @@ def case4(self, p, w, d1, k):
     """
      - Case 4: d = 4, so dk-1 and dk+1 will contain nodes
     """
-    print("Case 4 called for probe", p, "d =", d1) if self.verbose else None
+    self["trace"] += "Case 4 called for probe " + str(p) + " and d = " + str(d1) + "\n"
 
-    if self.dkPlus    == []:    #dk+1 empty, target in dkMinus, these are siblings so lemma 2
-        lemma2(self, self.tDict[self.dkMinus[0]].parent, self.dkMinus[0], self.dkMinus[-1])
+    if self["dkPlus"]    == []:    #dk+1 empty, target in dkMinus, these are siblings so lemma 2
+        lemma2(self, self.tDict[self["dkMinus"][0]].parent, self["dkMinus"][0], self["dkMinus"][-1])
         return
 
-    elif self.dkMinus == []:     #dk-1 empty, so target set in dkPlus (children(wk, zk)) so lemma 4
-        self.lemma4(self.tDict[self.dkPlus[0]].parent, self.tDict[self.dkPlus[-1]].parent, k + 1)
+    elif self["dkMinus"] == []:     #dk-1 empty, so target set in dkPlus (children(wk, zk)) so lemma 4
+        self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, k + 1)
         return
 
-    print("Assigning zk-1 to node", self.dkMinus[-1]) if self.verbose else None
-    zkMinus = self.dkMinus[-1]   #Get zk, wk-2's rightmost child
+    self["trace"] += "Assigning zk-1 to node " + str(self["dkMinus"][-1]) + "\n"
+    zkMinus = self["dkMinus"][-1]   #Get zk, wk-2's rightmost child
     
     p2, minus = (zkMinus, 1) if self.tDict[zkMinus].children == [] else (self.tDict[zkMinus].children[0], 0)
 
@@ -35,7 +35,7 @@ def case4(self, p, w, d1, k):
 
     elif d2 == 2:
         if minus:
-            lemma2(self, self.tDict[zkMinus].parent, self.dkMinus[0], self.dkMinus[-2])
+            lemma2(self, self.tDict[zkMinus].parent, self["dkMinus"][0], self["dkMinus"][-2])
             return
 
         if len(self.tDict[zkMinus].children) == 1:    #zk is zk-1's only child, target at zk's parent
@@ -57,10 +57,10 @@ def case4(self, p, w, d1, k):
             vkMinus3 = self.tDict[self.tDict[w].parent].parent
 
             if vkMinus3 is None:
-                lemma2(self, vkMinus2, self.dkMinus[0], self.dkMinus[-1])
+                lemma2(self, vkMinus2, self["dkMinus"][0], self["dkMinus"][-1])
                 return
 
-            lemma3(self, vkMinus3, vkMinus2, self.dkMinus[0], self.dkMinus[-1])
+            lemma3(self, vkMinus3, vkMinus2, self["dkMinus"][0], self["dkMinus"][-1])
             return
 
         elif d3 == 3:
@@ -79,11 +79,11 @@ def case4(self, p, w, d1, k):
             self.lemma4(w, t, self.tDict[w].level + 1)
             return
 
-        if len(self.dkMinus) == 2:   #there's one other vertex on zk.level, it's 3 away so target found
-            return located(self, self.dkMinus[0])
+        if len(self["dkMinus"]) == 2:   #there's one other vertex on zk.level, it's 3 away so target found
+            return located(self, self["dkMinus"][0])
 
         #Otherwise the target is in the siblings of wk-2's children, so lemma 2
-        lemma2(self, self.tDict[zkMinus].parent, self.dkMinus[0], self.dkMinus[-2])
+        lemma2(self, self.tDict[zkMinus].parent, self["dkMinus"][0], self["dkMinus"][-2])
         return
 
     elif d2 == 4:

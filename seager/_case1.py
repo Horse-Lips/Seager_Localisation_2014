@@ -11,13 +11,13 @@ def case1(self, p, w, d1, k):
         - vk - The leftmost child of w.
         - d  - The distance between the previous probe and the target.
     """
-    print("Case 1 called for probe", p, "d =", d1) if self.verbose else None
+    self["trace"] += "Case 1 called for probe " + str(p) + " and d = " + str(d1) + "\n"
 
-    if self.dkPlus == []: #If vk has no children, target located at its parent
-        return located(self, self.dkMinus[0])
+    if self["dkPlus"] == []: #If vk has no children, target located at its parent
+        return located(self, self["dkMinus"][0])
 
     elif len(self.tDict[w].children) == 1: #If vk is the unique child of w then lemma 3
-        lemma3(self, w, self.tDict[p].parent, self.dkPlus[0], self.dkPlus[-1])
+        lemma3(self, w, self.tDict[p].parent, self["dkPlus"][0], self["dkPlus"][-1])
         return
 
     #Otherwise w has more than one child, zk is its rightmost child
@@ -28,7 +28,7 @@ def case1(self, p, w, d1, k):
     s  = self.tDict[w].children[-2]  #s is the child to the left of zk
 
     if len(self.tDict[zk].children) > 1: #zk has > 1 child, then w.parent has <= 1 child, probe zk
-        print("zk has more than one child")
+        self["trace"] += "zk has more than one child\n"
         d2 = self.probe(zk)
 
         if d2 == -1:
@@ -49,16 +49,16 @@ def case1(self, p, w, d1, k):
             return
 
         elif d2 == 3:   #If d2 is 3 then target is in children(vk) excluding vk + 1, so lemma 2
-            lemma2(self, vk, self.dkPlus[0], self.dkPlus[-1])
+            lemma2(self, vk, self["dkPlus"][0], self["dkPlus"][-1])
             return
 
         elif d2 == 4:   #If d2 is 4 then the target is in children(wk+1, xk+1)
-            self.lemma4(self.dkPlus[0], self.dkPlus[-1], self.tDict[self.dkPlus[0]].level + 1)
+            self.lemma4(self["dkPlus"][0], self["dkPlus"][-1], self.tDict[self["dkPlus"][0]].level + 1)
             return
 
     #Now if zk has at most one child, then we probe w's parent
     elif len(self.tDict[zk].children) <= 1:
-        print("zk has at most one child")
+        self["trace"] += "zk has at most one child\n"
         d2 = self.probe(vkMinus2)
 
         if d2 == -1:
@@ -75,9 +75,9 @@ def case1(self, p, w, d1, k):
             return
 
         elif d2 == 3:   #If d2 is 3 then target is in children(vk) excluding vk + 1, so lemma 2
-            lemma2(self, vk, self.dkPlus[0], self.dkPlus[-1])
+            lemma2(self, vk, self["dkPlus"][0], self["dkPlus"][-1])
             return
 
         elif d2 == 4:   #If d2 is 4 then the target is in children(wk+1, xk+1)
-            self.lemma4(self.dkPlus[0], self.dkPlus[-1], self.tDict[self.dkPlus[0]].level + 1)
+            self.lemma4(self["dkPlus"][0], self["dkPlus"][-1], self.tDict[self["dkPlus"][0]].level + 1)
             return

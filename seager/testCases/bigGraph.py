@@ -1,14 +1,9 @@
-import matplotlib.pyplot as plt
 import networkx as nx
-import numpy    as np
 import sys
 
 sys.path.append("../..")
-
 from seager import Seager
-from treeGen import *
 
-np.random.seed(5)
 
 tree = nx.Graph()
 tree.add_nodes_from(range(102))
@@ -77,26 +72,25 @@ for edge in edges:
     tree.add_edge(edge[0], edge[1])
     tree.add_edge(edge[1], edge[0])
 
+
 successful = 0
 
 for i in range(0, len(tree)):
-    print("====== Initial Target Location:", i, "======")
-    solver = Seager(tree, [i], verbose = True)
+    solver = Seager(tree)
+    solver["t"] = [i]
     solver.solve()
 
-    
-
-    if solver.tLocation == solver.t[-1]:
+    if solver["tLocation"] == solver["t"][-1]:
         successful += 1
 
     else:
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Target list:", solver.t)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Probe list:", solver.probeList)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Located at node:", solver.tLocation)
-    print("\n")
+        print("====== Initial Target Location:", i, "======")
+        print(solver["trace"])
+        print("Target list:",     solver["t"])
+        print("Probe list:",      solver["probeList"])
+        print("Located at node:", solver["tLocation"])
+        print("\n")
 
 print("Execution finished.")
 print(successful, "/", len(tree), "successful")
 
-"""nx.draw(tree, with_labels = True)
-plt.show()"""

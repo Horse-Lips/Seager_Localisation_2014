@@ -13,7 +13,7 @@ def lemma2(self, v, w, z):
         - w - The leftmost sibling in the subset of v's children.
         - z - The rightmost sibling in the subset of v's children.
     """
-    print("Lemma 2 called on Siblings(", w, ",", z, ")") if self.verbose else None
+    self["trace"] += "Lemma 2 called on Siblings(" + str(w) + ", " + str(z) + ")\n"
 
     sibList = siblings(self, w, z)
 
@@ -34,7 +34,7 @@ def lemma2(self, v, w, z):
         p, d, r = z, 1, 1
 
     else:   #Neither w nor z have unique children, wrong lemma used so exit
-        print("Lemma 2 used incorrectly. Exiting.")  if self.verbose else None
+        self["trace"] += "Lemma 2 used incorrectly. Exiting.\n"
         return None
         
     d1 = self.probe(p)
