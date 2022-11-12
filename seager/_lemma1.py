@@ -1,4 +1,4 @@
-import networkx as nx
+from networkx import relabel_nodes
 
 
 def lemma1(self):
@@ -46,7 +46,7 @@ def lemma1(self):
             labelMap[oldChildren[-1]]            = oldChildren[secDeg]
             oldChildren[-1], oldChildren[secDeg] = oldChildren[secDeg], oldChildren[-1]
 
-    self.tree = nx.relabel_nodes(self.tree, labelMap, copy = True)  #Update altered node labels
+    self.tree = relabel_nodes(self.tree, labelMap, copy = True)  #Update altered node labels
 
     self.tDict = dict()
     self.lDict = dict()

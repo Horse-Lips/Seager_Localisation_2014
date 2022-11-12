@@ -1,6 +1,3 @@
-import sys
-
-
 def lemma2(self, v, w, z):
     """
      - Lemma 2: Given v with w and z among its children where target set is

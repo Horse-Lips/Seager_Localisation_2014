@@ -1,7 +1,4 @@
-import sys
-import networkx as nx
-import numpy    as np
-
+from networkx import shortest_path_length, single_source_dijkstra_path_length
 from random   import choice
 from ._lemma1 import lemma1
 from ._lemma2 import lemma2
@@ -181,7 +178,7 @@ class Seager:
 
         self["probeNum"] += 1
 
-        d  = nx.shortest_path_length(self.tree, v, self["t"][self["probeNum"] - 1])
+        d  = shortest_path_length(self.tree, v, self["t"][self["probeNum"] - 1])
 
         self["trace"] += "Probing node: " + str(v) + " for target at node " + str(self["t"][self["probeNum"] - 1])
         self["trace"] += " and d = " + str(d) + "\n"
@@ -197,7 +194,7 @@ class Seager:
         """
          - Updates the sets Dk-1, Dk, Dk+1
         """
-        distances = nx.single_source_dijkstra_path_length(self.tree, v)
+        distances = single_source_dijkstra_path_length(self.tree, v)
         dkMinus, dk, dkPlus = [], [], []
 
         tSet = self["dkMinus"] + self["dk"] + self["dkPlus"]
