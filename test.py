@@ -1,9 +1,6 @@
 import networkx as nx
 import sys
-
-sys.path.append("../..")
 from seager import Seager
-
 
 tree = nx.Graph()
 tree.add_nodes_from(range(102))

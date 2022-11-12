@@ -1,4 +1,3 @@
-from ._utils import located, siblings
 from ._lemma2 import lemma2
 from ._lemma3 import lemma3
 
@@ -24,14 +23,8 @@ def case4(self, p, w, d1, k):
 
     d2 = self.probe(p2)  #Probe zk's first child or zk if there are no children
 
-    if d2 == -1:
-        return
-
-    elif d2 == 0:
-        return located(self, p2)
-
-    elif d2 == 1:
-        return located(self, self.tDict[p2].parent)
+    if d2 == 1:
+        return self.located(self.tDict[p2].parent)
 
     elif d2 == 2:
         if minus:
@@ -39,18 +32,12 @@ def case4(self, p, w, d1, k):
             return
 
         if len(self.tDict[zkMinus].children) == 1:    #zk is zk-1's only child, target at zk's parent
-            return located(self, self.tDict[zkMinus].parent)
+            return self.located(self.tDict[zkMinus].parent)
 
         d3 = self.probe(w)
 
-        if d3 == -1:
-            return
-
-        elif d3 == 0:
-            return located(self, w)
-
-        elif d3 == 1:
-            return located(self, self.tDict[w].parent)
+        if d3 == 1:
+            return self.located(self.tDict[w].parent)
 
         elif d3 == 2:
             vkMinus2 = self.tDict[w].parent
@@ -74,13 +61,13 @@ def case4(self, p, w, d1, k):
     elif d2 == 3:
         if minus:
             #Same as d2 == 4 and no minus
-            t = siblings(w, zkMinus)[siblings(self, w, zkMinus).index(zkMinus) - 1]
+            t = self.siblings(w, zkMinus)[self.siblings(w, zkMinus).index(zkMinus) - 1]
 
             self.lemma4(w, t, self.tDict[w].level + 1)
             return
 
         if len(self["dkMinus"]) == 2:   #there's one other vertex on zk.level, it's 3 away so target found
-            return located(self, self["dkMinus"][0])
+            return self.located(self["dkMinus"][0])
 
         #Otherwise the target is in the siblings of wk-2's children, so lemma 2
         lemma2(self, self.tDict[zkMinus].parent, self["dkMinus"][0], self["dkMinus"][-2])
@@ -93,7 +80,7 @@ def case4(self, p, w, d1, k):
             return
 
         #If d = 4 then the target is in Children(vk-1, t) where t is zk's predecessor, so lemma 4
-        t = siblings(self, w, zkMinus)[siblings(self, w, zkMinus).index(zkMinus) - 1]
+        t = self.siblings(w, zkMinus)[self.siblings(w, zkMinus).index(zkMinus) - 1]
 
         self.lemma4(w, t, self.tDict[w].level + 1)
         return

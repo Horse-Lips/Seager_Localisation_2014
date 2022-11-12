@@ -1,6 +1,4 @@
-from ._utils import located
 from ._lemma2 import lemma2
-from ._utils import children
 
 
 def case5(self, p, w, d1, zkMinus):
@@ -90,14 +88,8 @@ def case5b(self, p, w, d1):
 
     d2 = self.probe(zkMinus2)
 
-    if d2 == -1:
-        return
-
-    elif d2 == 0:
-        return located(self, zkMinus2)
-
-    elif d2 == 1:
-        return located(self, zkMinus)
+    if d2 == 1:
+        return self.located(zkMinus)
 
     elif d2 == 2:
         self.lemma4(self.tDict[zkMinus].children[0], self.tDict[zkMinus].children[-1], self["k"] + 1)
@@ -241,11 +233,11 @@ def case5bExtraCase(self, p, w, d1, d2):
         s = self.tDict[s].parent if s is not None else None
         t = self.tDict[t].parent if t is not None else None
 
-        if q == None or R == None or children(self, q, R) == []:
+        if q == None or R == None or self.children(q, R) == []:
             self.lemma4(s, t, self.tDict[s].level + 1)
             return
 
-        elif s == None or t == None or children(self, s, t) == []:
+        elif s == None or t == None or self.children(s, t) == []:
             self.lemma4(q, R, self.tDict[q].level + 1)
             return
 
@@ -255,9 +247,9 @@ def case5bExtraCase(self, p, w, d1, d2):
             return
 
         else:
-            self["dkMinus"] = children(self, self.tDict[s].parent, self.tDict[t].parent)
+            self["dkMinus"] = self.children(self.tDict[s].parent, self.tDict[t].parent)
             self["dk"]      = []
-            self["dkPlus"]  = children(self, self.tDict[q].parent, self.tDict[R].parent)
+            self["dkPlus"]  = self.children(self.tDict[q].parent, self.tDict[R].parent)
 
             self["k"] = self.tDict[s].level + 1
 
@@ -275,17 +267,11 @@ def case5c(self, p, w, d1):
 
     d2 = self.probe(zk)
 
-    if d2 == -1:
-        return
-
-    elif d2 == 0:
-        return located(self, zk)
-
-    elif d2 == 1:
-        return located(self, self["dkMinus"][-1])
+    if d2 == 1:
+        return self.located(self["dkMinus"][-1])
 
     elif d2 == 2:
-        return located(self, self.tDict[self["dkMinus"][-1]].parent)
+        return self.located(self.tDict[self["dkMinus"][-1]].parent)
 
     elif d2 == 3:
         t = self.tDict[zkMinus2].children[0]
@@ -297,13 +283,7 @@ def case5c(self, p, w, d1):
         zkMinus3 = self.tDict[zkMinus2].parent
         d3 = self.probe(zkMinus3)
 
-        if d3 == -1:
-            return
-
-        elif d3 == 0:
-            return located(self, zkMinus3)
-
-        elif d3 == 1:
+        if d3 == 1:
             zkMinus3Children = self.tDict[zkMinus3].children
             s = zkMinus3Children[0]
             zkMinus2Pred = zkMinus3Children[zkMinus3Children.index(zkMinus2) - 1]

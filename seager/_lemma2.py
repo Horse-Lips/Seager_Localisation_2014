@@ -1,4 +1,3 @@
-from ._utils import located, siblings
 import sys
 
 
@@ -15,10 +14,10 @@ def lemma2(self, v, w, z):
     """
     self["trace"] += "Lemma 2 called on Siblings(" + str(w) + ", " + str(z) + ")\n"
 
-    sibList = siblings(self, w, z)
+    sibList = self.siblings(w, z)
 
     if len(sibList) == 1:
-        return located(self, sibList[0])
+        return self.located(sibList[0])
 
 
     if len(self.tDict[w].children) == 1: #w has 1 child, narrow tree from left to right
@@ -39,21 +38,15 @@ def lemma2(self, v, w, z):
         
     d1 = self.probe(p)
 
-    if d1 == -1:
-        return
-
-    elif d1 == 0:
-        return located(self, p)
-
-    elif d1 == 1:
-        return located(self, self.tDict[p].parent)
+    if d1 == 1:
+        return self.located(self.tDict[p].parent)
 
     elif d1 == 2:
         if not d:
-            return located(self, v)
+            return self.located(v)
 
         if len(sibList) == 2:
-            return located(self, sibList[1])
+            return self.located(sibList[1])
 
         else:
             lemma2(self, v, sibList[1 - r], sibList[-1 - r])
@@ -70,7 +63,7 @@ def lemma2(self, v, w, z):
                 return
 
         if len(sibList) == 2:
-            return located(self, sibList[1 - r])
+            return self.located(sibList[1 - r])
 
         else:
             lemma2(self, v, sibList[1 - r], sibList[-1 - r])

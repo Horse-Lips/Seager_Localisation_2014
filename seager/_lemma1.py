@@ -1,6 +1,4 @@
 import networkx as nx
-import numpy as np
-import sys
 
 
 def lemma1(self):

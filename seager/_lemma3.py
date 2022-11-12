@@ -1,4 +1,3 @@
-from ._utils  import located
 from ._lemma2 import lemma2
 
 
@@ -21,22 +20,16 @@ def lemma3(self, u, v, w, z):
         p, d = u, 1
 
     d1 = self.probe(p)
-
-    if d1 == -1:
-        return
-
-    if d1 == 0:
-        return located(self, p)
         
-    elif d1 == 1:
-        return located(self, self.tDict[p].children[0])
+    if d1 == 1:
+        return self.located(self.tDict[p].children[0])
 
     elif d1 == 2:
         if d:
             lemma2(self, v, w, z)
             return
 
-        return located(self, v)
+        return self.located(v)
 
     elif d1 == 3:
         if d:

@@ -3,7 +3,6 @@ import networkx as nx
 import numpy    as np
 
 from random   import choice
-from ._utils  import located, reduceSet, children
 from ._lemma1 import lemma1
 from ._lemma2 import lemma2
 from ._case1  import case1
@@ -13,17 +12,47 @@ from ._case4  import case4
 from ._case5  import case5
 
 
+class nodeInfo:
+    """
+     - Stores information about nodes in a tree.
+     - Variables:
+        - Level    - Level of node in the tree.
+        - Parent   - Parent of node, None if root.
+        - Children - List of the node's children.
+    """
+    def __init__(self, level, parent, children):
+        self.level    = level
+        self.parent   = parent
+        self.children = children
+
+
 class Seager:
+    """
+     - Class for the Seager 2014 localisation strategy for trees.
+     - The solve() method is the main function after initialisation.
+     - Variables:
+        - tree  - NetworkX tree object rooted at node 0
+        - tDict - Dict representation of the tree (See createTreeDict function)
+        - lDict - Dict of list of nodes at each tree level (see createLevelsDict function)
+        - iDict - Dict of relevant information during execution containing:
+            - trace                 - Verbose information about the execution
+            - k                     - The level marked as k at current stage of execution
+            - dkMinus, dk, dkPlus   - Target locations on levels k - 1, k, k + 1
+            - probeNum, probeList   - Current probe number and list of all previous probed vertices
+            - t, tLocation          - List of all target locations, final location of target for testing
+                                    - t can be preset as a list of locations the target will move between
+            - l, vl, yl, zl         - Level l in the tree and associated nodes
+    """
     def __init__(self, tree):
         self.tree  = tree   #NetworkX tree object (Rooted at node 0)
         self.tDict = dict() #Dict representation of tree object (See createTreeDict)  
         self.lDict = dict() #Dict of level information of the tree object (See createLevelsDict)
         self.iDict = dict() #Dict containing relevant information during execution
 
-        self["trace"] = ""  #Trace of execution for verbose output
-
         self.createTreeDict(0)  #Initialise the tree dict
         self.createLevelsDict() #Initialise the levels dict
+
+        self["trace"] = ""  #Trace of execution for verbose output
 
 
     def __setitem__(self, key, value):
@@ -31,31 +60,21 @@ class Seager:
 
 
     def __getitem__(self, key):
-        try:
-            return self.iDict[key]
-
-        except:
-            return None
+        try:    return self.iDict[key]
+        except: return None
 
 
     def solve(self):
         """
-         - Carries out the strategy of theorem 8. Firstly the
-         - root of the tree is probed, then Lemma 4 is called.
+         - Carries out the strategy of theorem 8.
         """
-        if lemma1(self) == -1:  #Organise tree and check for hideouts
-            return None         #Exit if hideout detected
+        d = self.probe(0)   #Probe root
 
-        d = self.probe(0)
+        if lemma1(self) != -1 and d != -1:  #Organise tree and check for hideouts
+            if len(self.lDict[d]) == 1:
+                return self.located(self.lDict[d][0])
 
-        if d == 0:
-            return located(self, self.lDict[0][0])
-
-        elif len(self.lDict[d]) == 1:
-            return located(self, self.lDict[d][0])
-
-        self.lemma4(self.tDict[self.lDict[d][0]].parent, self.tDict[self.lDict[d][-1]].parent, d)
-        return
+            self.lemma4(self.tDict[self.lDict[d][0]].parent, self.tDict[self.lDict[d][-1]].parent, d)
 
 
     def lemma4(self, w, z, k):
@@ -70,94 +89,78 @@ class Seager:
             - z - The rightmost sibling of Siblings(w, z).
             - k - The level in the tree of Children(w, z) (NOT w and z).
         """
-        self["trace"] += "Lemma 4 called for Children(" + str(w) + ", " + str(z) + ") on level" + str(k) + "\n"
+        self["trace"] += "Lemma 4 called for Children(" + str(w) + ", " + str(z) + ") on level " + str(k) + "\n"
 
-        if w == z and self.tDict[w].children == []:
-            return located(self, w)
+        if w == z and self.tDict[w].children == []: return self.located(w)
 
-        self["k"] = k                           #Set global value of level k
-        self.setDSets(w, z)
+        w, z      = self.reduceSet(w, z)   #Replace w with w', z with z' if no children
+        self["k"] = k                       #Set global value of level k
+        self.setDSets(w, z)                 #Set dk to Children(w, z) and expand
 
-        w, z   = reduceSet(self, w, z)      #Replace w with w', z with z' if no children
-        vk     = self.tDict[w].children[0]  #Let vk be the first child of w
+        if len(self["dk"]) == 1:                    return self.located(self["dk"][0])
+        
+        vk     = self["dk"][0]  #Let vk be the first child of w
         self["trace"] += "Assigned vk to node: " + str(vk) + "\n"
-
-        if len(children(self, w, z)) == 1:
-            return located(self, children(self, w, z)[0])
             
 
-        p, d = (vk, 1) if len(self.tDict[vk].children) == 0 else (self.tDict[vk].children[0], 0)
+        p, d = (vk, 1) if len(self.tDict[vk].children) == 0 else (self["dkPlus"][0], 0)
         d1   = self.probe(p)
-
-        ds = self.updateDSets(p, d1)
+        ds   = self.updateDSets(p, d1)
 
         if ds != -1:
             self["trace"] += "located by dist set update\n"
             return
 
-        elif d1 == 0:
-            return located(self, p)
-
         elif d1 == 1:
-            return located(self, self.tDict[p].parent)
+            return self.located(self.tDict[p].parent)
 
         elif d1 == 2:
             if d:   #If probed vk and d1 == 2 then lemma 2 w's other children
                 lemma2(self, w, self["dk"][0], self["dk"][-1])
-                return
 
             elif w == z and len(self.tDict[vk].children) == 1:
-                return located(self, w)
+                return self.located(w)
 
             else:
                 case1(self, p, w, d1, k)
-                return
 
         elif d1 == 3:
             if d:   #If probed vk and d1 == 3 then case 4 (dk-1 and dk+1 non-empty)
                 case4(self, p, w, d1, k)
-                return
 
-            case2(self, p, w, d1, k)
-            return
+            else:
+                case2(self, p, w, d1, k)
 
         elif d1 == 4:
             if d:   #If probed vk and d1 == 4 then target in subset of Children(w, z)
                 self.lemma4(self.tDict[self["dk"][0]].parent, self.tDict[self["dk"][-1]].parent, k)
-                return
 
-            case4(self, p, w, d1, k)
-            return
+            else:
+                case4(self, p, w, d1, k)
 
         elif d1 % 2 == 1 and d1 > 3:
             if d:   #If vk probed then dk+1 and dk-1 possible
                 if self["dkMinus"] == []:
                     self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, self["k"] + 1)
-                    return
 
                 elif self["dkPlus"] == []:
                     self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dkMinus"][-1]].parent, self["k"] - 1)
-                    return
 
-            case3(self, p, w, d1, k)
-            return
+            else:
+                case3(self, p, w, d1, k)
 
         elif d1 % 2 == 0 and d1 > 5:
             if d:
-                self.lemma4(self.tDict[self["dk"][0]].parent, self.tDict[self["dk"][-1]].parent, k)
-                return
+                self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dk"][-1]].parent, k)
 
-            if self["dkMinus"] == []:
+            elif self["dkMinus"] == []:
                 self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, k + 1)
-                return
 
             elif self["dkPlus"] == []:
                 self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dkMinus"][-1]].parent, k - 1)
-                return
 
             else:
                 case5(self, p, w, d1, self["dkMinus"][-1])
-                return
 
 
     def probe(self, v):
@@ -182,7 +185,11 @@ class Seager:
 
         self["trace"] += "Probing node: " + str(v) + " for target at node " + str(self["t"][self["probeNum"] - 1])
         self["trace"] += " and d = " + str(d) + "\n"
-        
+
+        if d == 0:
+            self.located(v)
+            return -1
+
         return d
 
         
@@ -203,19 +210,15 @@ class Seager:
                 elif self.tDict[i].level == self["k"]:
                     dk.append(i)
 
-
                 elif self.tDict[i].level == self["k"] + 1:
                     dkPlus.append(i)
 
         tSetNew = dkMinus + dk + dkPlus
 
         if len(tSetNew) == 1:
-            return located(self, tSetNew[0])
+            return self.located(tSetNew[0])
 
-        self["dkMinus"] = dkMinus
-        self["dk"]      = dk
-        self["dkPlus"]  = dkPlus
-
+        self["dkMinus"], self["dk"], self["dkPlus"] = dkMinus, dk, dkPlus
         return -1
 
 
@@ -224,7 +227,7 @@ class Seager:
          - Expands Dk-1, Dk, and Dk+1 simulating target movement
         """
         self["dkMinus"] = []
-        self["dk"]      = children(self, w, z)  #Set dk sets
+        self["dk"]      = self.children(w, z)  #Set dk sets
         self["dkPlus"]  = []
 
         for n in self["dk"]:
@@ -266,18 +269,69 @@ class Seager:
             self.lDict[self.tDict[node].level].append(node)
 
 
-class nodeInfo:
-    """
-     - Stores the following information about a node in the tree:
-        - Level    - The level of the tree the node is on.
-        - Parent   - The parent of the node, None if the node is the root.
-        - Children - A list of the node's children.
-    """
-    def __init__(self, level, parent, children):
-        self.level    = level
-        self.parent   = parent
-        self.children = children
+    def located(self, v):
+        """
+         - Sets the target as located at node v.
+         - Args:
+            - v - The vertex that the target was located at.
+        """
+        self["trace"] += "Target located at node: " + str(v) + "\n"
+        self["tLocation"] = v
 
 
-    def __str__(self):
-        return "Level: " + str(self.level) + "\nParent: " + str(self.parent) + "\nChildren: " + str(self.children)
+    def siblings(self, w, z):
+        """
+         - Returns list of siblings(w, z) defined as all vertices
+         - on the same level between w and z with the same parent.
+         - Args:
+            - w - The leftmost sibling in the set.
+            - z - The rightmost sibling in the set.
+
+         - Returns:
+            -   - The set of Siblings(w, z) as defined above.
+        """
+        if self.tDict[w].parent != self.tDict[z].parent:
+            return
+
+        allChildren = self.tDict[self.tDict[w].parent].children
+
+        return allChildren[allChildren.index(w):allChildren.index(z) + 1]
+
+
+    def children(self, w, z):
+        """
+         - Returns the list of children of vertices between
+         - and including w and z on the same level.
+         - Args:
+            - w - The leftmost vertex of the subset of the level.
+            - z - The rightmost vertex of the subset of the level.
+
+         - Returns:
+            -   - The set of Children(w, z) as defined above.
+        """
+        levelK    = self.lDict[self.tDict[w].level]
+        childList = []
+
+        for node in levelK[levelK.index(w):levelK.index(z) + 1]:
+            for child in self.tDict[node].children:
+                childList.append(child)
+
+        return childList
+
+
+    def reduceSet(self, w, z):
+        """
+         - Replaces w with w' and z with z' if they have
+         - no children. Used at the start of Lemma 4.
+        """
+        levelK = self.lDict[self.tDict[w].level]
+        wIndex, zIndex = levelK.index(w), levelK.index(z)
+
+        while self.tDict[levelK[wIndex]].children == []:
+            wIndex += 1
+
+        while self.tDict[levelK[zIndex]].children == []:
+            zIndex -= 1
+
+        return levelK[wIndex], levelK[zIndex]
+

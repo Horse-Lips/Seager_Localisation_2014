@@ -1,4 +1,3 @@
-from ._utils import located
 from ._lemma2 import lemma2
 from ._lemma3 import lemma3
 
@@ -14,7 +13,7 @@ def case1(self, p, w, d1, k):
     self["trace"] += "Case 1 called for probe " + str(p) + " and d = " + str(d1) + "\n"
 
     if self["dkPlus"] == []: #If vk has no children, target located at its parent
-        return located(self, self["dkMinus"][0])
+        return self.located(self["dkMinus"][0])
 
     elif len(self.tDict[w].children) == 1: #If vk is the unique child of w then lemma 3
         lemma3(self, w, self.tDict[p].parent, self["dkPlus"][0], self["dkPlus"][-1])
@@ -31,14 +30,8 @@ def case1(self, p, w, d1, k):
         self["trace"] += "zk has more than one child\n"
         d2 = self.probe(zk)
 
-        if d2 == -1:
-            return
-
-        elif d2 == 0:
-            return located(self, zk)
-
-        elif d2 == 1:   #If d2 is 1 then the target is at w
-            return located(self, w)
+        if d2 == 1:   #If d2 is 1 then the target is at w
+            return self.located(w)
 
         elif d2 == 2: #Target set is w's parent and w's children (minus zk)
             if vkMinus2 is None:  #If w is the root it has no parent, lemma 2 on w's children
@@ -61,14 +54,8 @@ def case1(self, p, w, d1, k):
         self["trace"] += "zk has at most one child\n"
         d2 = self.probe(vkMinus2)
 
-        if d2 == -1:
-            return
-
-        elif d2 == 0:
-            return located(self, vkMinus2)
-
         if d2 == 1:   #If d2 is 1 then the target is at w
-            return located(self, w)
+            return self.located(w)
 
         elif d2 == 2:   #If d2 == 2 then the target is in siblings(vk, zk) so lemma 2
             lemma2(self, w, vk, zk)
