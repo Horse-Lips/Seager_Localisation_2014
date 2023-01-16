@@ -30,15 +30,14 @@ class Seager:
      - Variables:
         - tree  - NetworkX tree object rooted at node 0
         - tDict - Dict representation of the tree (See createTreeDict function)
-        - lDict - Dict of list of nodes at each tree level (see createLevelsDict function)
+        - lDict - Dict of lists of nodes at each tree level (see createLevelsDict function)
         - iDict - Dict of relevant information during execution containing:
             - trace                 - Verbose information about the execution
             - k                     - The level marked as k at current stage of execution
             - dkMinus, dk, dkPlus   - Target locations on levels k - 1, k, k + 1
-            - probeNum, probeList   - Current probe number and list of all previous probed vertices
-            - t, tLocation          - List of all target locations, final location of target for testing
-                                    - t can be preset as a list of locations the target will move between
-            - l, vl, yl, zl         - Level l in the tree and associated nodes
+            - probeNum, probeList   - Current probe number and list of all previously probed vertices
+            - t, tLocation          - List of target locations, final target location. t can be preset as node list
+            - l, vl, yl, zl         - Level l in the tree and associated nodes (case 5)
     """
     def __init__(self, tree):
         self.tree  = tree   #NetworkX tree object (Rooted at node 0)
@@ -137,11 +136,20 @@ class Seager:
 
         elif d1 % 2 == 1 and d1 > 3:
             if d:   #If vk probed then dk+1 and dk-1 possible
-                if self["dkMinus"] == []:
+                if self["dkMinus"] == [] and self["dkPlus"] != []:
                     self.lemma4(self.tDict[self["dkPlus"][0]].parent, self.tDict[self["dkPlus"][-1]].parent, self["k"] + 1)
 
-                elif self["dkPlus"] == []:
+                elif self["dkPlus"] == [] and self["dkMinus"] != []:
                     self.lemma4(self.tDict[self["dkMinus"][0]].parent, self.tDict[self["dkMinus"][-1]].parent, self["k"] - 1)
+
+                elif self["dkMinus"] == [] and self["dkPlus"] == []:
+                    print("====== Lemma 4 line 138 - dkPlus and dkMinus both empty ======")
+                    print(self["dkMinus"])
+                    print(self["dk"])
+                    print(self["dkPlus"])
+
+                else:
+                    case5(self, p, w, d1, self["dkMinus"][-1])
 
             else:
                 case3(self, p, w, d1, k)
